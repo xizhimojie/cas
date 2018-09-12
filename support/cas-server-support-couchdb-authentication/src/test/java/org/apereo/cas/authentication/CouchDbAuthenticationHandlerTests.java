@@ -18,14 +18,15 @@ import org.apereo.cas.config.CasCoreWebConfiguration;
 import org.apereo.cas.config.CasCouchDbCoreConfiguration;
 import org.apereo.cas.config.CasPersonDirectoryConfiguration;
 import org.apereo.cas.config.CouchDbAuthenticationConfiguration;
+import org.apereo.cas.config.CouchDbAuthenticationHandlerConfiguration;
+import org.apereo.cas.config.couchdb.AuthenticationConfiguration;
 import org.apereo.cas.config.support.CasWebApplicationServiceFactoryConfiguration;
+import org.apereo.cas.couchdb.core.CouchDbConnectorFactory;
 import org.apereo.cas.couchdb.core.ProfileCouchDbRepository;
 import org.apereo.cas.util.CollectionUtils;
 
 import lombok.Getter;
 import lombok.val;
-import org.ektorp.CouchDbConnector;
-import org.ektorp.CouchDbInstance;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -60,6 +61,8 @@ import static org.junit.Assert.*;
 @SpringBootTest(
     classes = {
         CasCouchDbCoreConfiguration.class,
+        AuthenticationConfiguration.class,
+        CouchDbAuthenticationHandlerConfiguration.class,
         CouchDbAuthenticationConfiguration.class,
         CasCoreAuthenticationConfiguration.class,
         CasCoreServicesAuthenticationConfiguration.class,
@@ -95,14 +98,11 @@ public class CouchDbAuthenticationHandlerTests {
     public final SpringMethodRule springMethodRule = new SpringMethodRule();
 
     @Autowired
-    @Qualifier("authenticationCouchDbConnector")
-    private CouchDbConnector couchDbConnector;
+    @Qualifier("authenticationCouchDbFactory")
+    private CouchDbConnectorFactory couchDbFactory;
 
     @Autowired
-    @Qualifier("authenticationCouchDbInstance")
-    private CouchDbInstance couchDbInstance;
-
-    @Autowired
+    @Qualifier("authenticationCouchDbRepository")
     private ProfileCouchDbRepository couchDbRepository;
 
     @Autowired
@@ -119,7 +119,7 @@ public class CouchDbAuthenticationHandlerTests {
 
     @Before
     public void setUp() {
-        couchDbInstance.createDatabaseIfNotExists(couchDbConnector.getDatabaseName());
+        couchDbFactory.getCouchDbInstance().createDatabaseIfNotExists(couchDbFactory.getCouchDbConnector().getDatabaseName());
         couchDbRepository.initStandardDesignDocument();
         RequestContextHolder.setRequestAttributes(
             new ServletRequestAttributes(new MockHttpServletRequest(), new MockHttpServletResponse()));
@@ -130,7 +130,7 @@ public class CouchDbAuthenticationHandlerTests {
 
     @After
     public void tearDown() {
-        couchDbInstance.deleteDatabase(couchDbConnector.getDatabaseName());
+        couchDbFactory.getCouchDbInstance().deleteDatabase(couchDbFactory.getCouchDbConnector().getDatabaseName());
     }
 
     @Test
