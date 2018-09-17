@@ -2,11 +2,12 @@ package org.apereo.cas.config;
 
 import org.apereo.cas.authentication.AuthenticationEventExecutionPlanConfigurer;
 import org.apereo.cas.authentication.AuthenticationHandler;
+import org.apereo.cas.authentication.principal.PrincipalFactory;
+import org.apereo.cas.authentication.principal.PrincipalFactoryUtils;
 import org.apereo.cas.authentication.principal.PrincipalResolver;
 import org.apereo.cas.authentication.support.password.PasswordEncoderUtils;
 import org.apereo.cas.configuration.CasConfigurationProperties;
 import org.apereo.cas.couchdb.core.CouchDbConnectorFactory;
-import org.apereo.cas.couchdb.core.ProfileCouchDbRepository;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -17,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -53,14 +53,10 @@ public class CouchDbAuthenticationConfiguration {
         return plan -> plan.registerAuthenticationHandlerWithPrincipalResolver(authenticationHandler, personDirectoryPrincipalResolver);
     }
 
-    @ConditionalOnMissingBean(name = "authenticationCouchDbRepository")
+    @ConditionalOnMissingBean(name = "couchDbPrincipalFactory")
     @Bean
-    @RefreshScope
-    public ProfileCouchDbRepository authenticationCouchDbRepository() {
-        val repository = new ProfileCouchDbRepository(authenticationCouchDbFactory.getIfAvailable().getCouchDbConnector(),
-            casProperties.getAuthn().getCouchDb().isCreateIfNotExists());
-        repository.initStandardDesignDocument();
-        return repository;
+    public PrincipalFactory couchDbPrincipalFactory() {
+        return PrincipalFactoryUtils.newPrincipalFactory();
     }
 
     @ConditionalOnMissingBean(name = "couchDbAuthenticatorProfileService")
